@@ -38,8 +38,9 @@ function verifyJWT(req, res, next) {
 async function run() {
   try {
     const userCollection = client.db('techforing').collection('users');
+    const jobCollection = client.db('techforing').collection('jobs');
 
-    // PUT user and get a token //
+    // POST user and get a token //
     app.post('/user', async (req, res) => {
       const user = req.body;
       const email = user.email;
@@ -56,6 +57,30 @@ async function run() {
         expiresIn: '1d',
       });
       res.send({ result, token });
+    });
+
+    // POST new Job post //
+    app.post('/jobpost', async (req, res) => {
+      const jobInfo = req.body;
+      const result = await jobCollection.insertOne(jobInfo);
+      res.send(result);
+    });
+
+    // GET Job Post //
+    app.get('/jobpost', verifyJWT, async (req, res) => {
+      const category = req.query.category;
+      const query = { category: category };
+      const cursor = jobCollection.find(query);
+      const jobposts = await cursor.toArray();
+      res.send(jobposts);
+    });
+
+    //GET single Post details by post id //
+    app.get('/post-details', async (req, res) => {
+      const postId = req.query.postId;
+      const filter = { _id: new ObjectId(postId) };
+      const cursor = await jobCollection.findOne(filter);
+      res.send(cursor);
     });
   } finally {
     // Ensures that the client will close when you finish/error
