@@ -60,27 +60,35 @@ async function run() {
     });
 
     // POST new Job post //
-    app.post('/jobpost', async (req, res) => {
+    app.post('/jobpost', verifyJWT, async (req, res) => {
       const jobInfo = req.body;
       const result = await jobCollection.insertOne(jobInfo);
       res.send(result);
     });
 
-    // GET Job Post //
+    // GET Job Post by category//
     app.get('/jobpost', verifyJWT, async (req, res) => {
       const category = req.query.category;
       const query = { category: category };
       const cursor = jobCollection.find(query);
-      const jobposts = await cursor.toArray();
-      res.send(jobposts);
+      const jobPosts = await cursor.toArray();
+      res.send({ success: true, jobPosts: jobPosts });
     });
 
     //GET single Post details by post id //
-    app.get('/post-details', async (req, res) => {
+    app.get('/post-details', verifyJWT, async (req, res) => {
       const postId = req.query.postId;
       const filter = { _id: new ObjectId(postId) };
-      const cursor = await jobCollection.findOne(filter);
-      res.send(cursor);
+      const postInfo = await jobCollection.findOne(filter);
+      res.send({ success: true, postInfo });
+    });
+
+    //delete single post by id //
+    app.delete('/post', verifyJWT, async (req, res) => {
+      const id = req.query.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await jobCollection.deleteOne(filter);
+      res.send(result);
     });
   } finally {
     // Ensures that the client will close when you finish/error
